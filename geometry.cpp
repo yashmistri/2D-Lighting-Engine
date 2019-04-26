@@ -8,6 +8,7 @@
 #include <SFML/Graphics.hpp>
 #include <math.h>
 #include <vector>
+#include <iostream>
 
 //returns a list of all points on a rectangle rect that intersect with line
 std::vector<sf::Vector2f> intersects_line_rect(Line &line, sf::RectangleShape &rect)
@@ -173,15 +174,15 @@ sf::Vector2f closest_point(sf::Vector2f &origin, std::vector<sf::Vector2f> &poin
 			}
 	int min = 0;
 
-	for(int i = 1; i < 4; i++)
+	for(int i = 1; i < points.size(); i++)
 	{
 
-		//std::cout <<points[i].x<<", "<< points[i].y<<std::endl;
+		std::cout <<points[i].x<<", "<< points[i].y<<std::endl;
 		//std::cout<<"i: "<<i<<" "<<Line::magnitude(origin, points[i])<<std::endl;
-		if(Line::magnitude(origin, points[min]) >= Line::magnitude(origin, points[i]))
+		if(Line::magnitude(origin, points[min]) > Line::magnitude(origin, points[i]))
 			min = i;
 	}
-	//std::cout<<std::endl;
+	std::cout<<std::endl;
 	return points[min];
 
 }

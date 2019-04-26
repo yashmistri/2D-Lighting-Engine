@@ -54,8 +54,8 @@ int main()
 
         mouse = (sf::Vector2f)sf::Mouse::getPosition(window);
 
-        int num_rays = 100;
-        double angle_rad = 0.000001;
+        int num_rays = 50;
+        double angle_rad = 0;
         double increment_rad = 6.2832/num_rays;
         for(int i = 0; i < num_rays; i++)
         {
@@ -80,16 +80,21 @@ int main()
         	{
             	sf::Vector2f* inter = get_intersection(ray, side);
             	if(inter != NULL)
+            	{
+                	//std::cout<<inter->x<<", "<<inter->y<<std::endl;
             		ray_inters.push_back(*inter);
+            	}
         	}
-			sf::Vector2f closest = closest_point(mouse, ray_inters);
-			shortened_line = Line(mouse, closest);
-			draw_line(window, shortened_line);
-			draw_point(window, closest);
+
+        	if(ray_inters.size()>0)
+        	{
+    			sf::Vector2f closest = closest_point(mouse, ray_inters);
+    			shortened_line = Line(mouse, closest);
+    			draw_line(window, shortened_line);
+    			draw_point(window, closest);
+        	}
 
         }
-
-
         window.display();
     }
 }
