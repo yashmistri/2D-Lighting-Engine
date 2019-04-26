@@ -10,6 +10,11 @@ Line::Line(sf::Vector2f &point1, sf::Vector2f &point2)
 	p2 = point2;
 }
 
+Line::Line()
+{
+
+}
+
 double Line::magnitude(sf::Vector2f &v1, sf::Vector2f &v2)
 {
 	return sqrt(pow(v2.y - v1.y,2) + pow(v2.x-v1.x,2));
