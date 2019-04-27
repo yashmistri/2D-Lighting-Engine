@@ -98,6 +98,11 @@ double get_slope(sf::Vector2f p1, sf::Vector2f p2)
 	return (p2.y - p1.y)/(p2.x - p1.y);
 }
 
+double get_angle(sf::Vector2f p1, sf::Vector2f p2)
+{
+	float a = atan2f(p2.y-p1.y, p2.x-p1.x);
+	return (a > 0) ? a : 6.2832 + a;
+}
 
 void generate_lines(sf::Vector2f &origin, std::vector<sf::RectangleShape> &rects, std::vector<Line> &lines)
 {
@@ -108,8 +113,8 @@ void generate_lines(sf::Vector2f &origin, std::vector<sf::RectangleShape> &rects
 		{
 			sf::Vector2f rect_point = rect_points[i];
 			sf::Vector2f extended = extend(origin,rect_point, 1000.0);
-			sf::Vector2f down(extended.x + extended.x*cos(.00001), extended.y + extended.y*sin(.00001));
-			sf::Vector2f up(extended.x - extended.x*cos(.00001), extended.y - extended.y*sin(.00001));
+			sf::Vector2f down(extended.x*cos(-.00001)-extended.y*sin(-.00001), extended.y*cos(-.00001) + extended.x*sin(-.00001));
+			sf::Vector2f up(extended.x*cos(.00001)-extended.y*sin(.00001), extended.y*cos(.00001) + extended.x*sin(.00001));
 			Line next(origin, extended);
 			Line down_line(origin, down);//Lines that go to the corner but don't intersect it
 			Line up_line(origin, up);
@@ -177,12 +182,12 @@ sf::Vector2f closest_point(sf::Vector2f &origin, std::vector<sf::Vector2f> &poin
 	for(int i = 1; i < points.size(); i++)
 	{
 
-		std::cout <<points[i].x<<", "<< points[i].y<<std::endl;
+		//std::cout <<points[i].x<<", "<< points[i].y<<std::endl;
 		//std::cout<<"i: "<<i<<" "<<Line::magnitude(origin, points[i])<<std::endl;
 		if(Line::magnitude(origin, points[min]) > Line::magnitude(origin, points[i]))
 			min = i;
 	}
-	std::cout<<std::endl;
+	//std::cout<<std::endl;
 	return points[min];
 
 }
@@ -209,24 +214,27 @@ std::map<double, sf::Vector2f> sort_points(sf::Vector2f &origin, std::vector<sf:
 void draw_triangles(sf::RenderWindow &window, sf::Vector2f &mouse, std::map<double, sf::Vector2f> &points)
 {
 	std::map<double, sf::Vector2f>::iterator it;
-	for(it = points.begin(); it != points.end(); it++)
+	for(it=points.begin(); it!= points.end(); it++)
 	{
 		sf::Vector2f p1;
-		sf::Vector2f p2;/*
-		if(it++ == points.end())
+		sf::Vector2f p2;
+		bool break_loop;
+
+		if(++it==points.end())
 		{
-			it--;
-			p1 = it->second;
+			p1 = (--it)->second;
 			it = points.begin();
 			p2 = it->second;
-			break;
+			break_loop = true;
 		}
-		else*/
+		else
 		{
+			--it;
 			p1 = it->second;
-			p2 = (++it)->second;
-			it--;
+			p2 = (++it)->second;it--;
 		}
+		//std::cout<<it->first<<"\n";
+		//std::cout<<p1.x<<", "<<p1.y<<std::endl;
 		sf::ConvexShape triangle;
 		triangle.setPointCount(3);
 		triangle.setPoint(0, mouse);
@@ -234,7 +242,10 @@ void draw_triangles(sf::RenderWindow &window, sf::Vector2f &mouse, std::map<doub
 		triangle.setPoint(2, p2);
 		triangle.setFillColor(sf::Color::White);
 		window.draw(triangle);
+		if(break_loop)
+			break;
 	}
+	std::cout<<std::endl;
 }
 
 

@@ -16,6 +16,7 @@ sf::Vector2f extend(sf::Vector2f &p1, sf::Vector2f &p2, double length);
 std::vector<sf::Vector2f> get_points(sf::RectangleShape &rect);
 std::vector<Line*> get_lines(sf::RectangleShape &rect);
 double get_slope(sf::Vector2f p1, sf::Vector2f p2);
+double get_angle(sf::Vector2f p1, sf::Vector2f p2);
 void generate_lines(sf::Vector2f &origin, std::vector<sf::RectangleShape> &rects, std::vector<Line> &lines);
 void get_rect_sides(std::vector<sf::RectangleShape> &rects, std::vector<Line> &rect_sides);
 void shorten_lines(sf::Vector2f &origin, std::vector<Line> &lines, std::vector<Line> &rect_sides, std::vector<sf::Vector2f> &intersections, sf::RenderWindow &window);
