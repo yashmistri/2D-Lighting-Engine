@@ -33,12 +33,14 @@ int main()
     sf::RectangleShape bound_rect;
     sf::CircleShape dot;
     rects.push_back(make_bound_rect(bound_rect));
-    rects.push_back(make_rect(100,100));
+    rects.push_back(make_rect(0,0));
+    rects.push_back(make_rect(125, 125));
     make_dot(dot);
     sf::Vector2f center(size.x/2,size.y/2);
     double ray_length = sqrt(pow(size.x,2) + pow(size.y,2));
     while (window.isOpen())
     {
+    	//std::cout<<get_angle(mouse, center)<<std::endl;
         sf::Event event;
         while (window.pollEvent(event))
         {
@@ -49,22 +51,13 @@ int main()
         sf::Vector2f extended_point;
         std::vector<Line> rect_sides;
         std::vector<Line> rays;
+        std::map<double, sf::Vector2f> inters;
         Line shortened_line;
         window.clear();
 
         mouse = (sf::Vector2f)sf::Mouse::getPosition(window);
 
-        int num_rays = 50;
-        double angle_rad = 0;
-        double increment_rad = 6.2832/num_rays;
-        for(int i = 0; i < num_rays; i++)
-        {
-        	sf::Vector2f end_point(mouse.x+ray_length*cos(angle_rad), mouse.y+ray_length*sin(angle_rad));
-        	Line ray(mouse, end_point);
-        	rays.push_back(ray);
-        	angle_rad += increment_rad;
-
-        }
+        generate_lines(mouse, rects, rays);
         get_rect_sides(rects, rect_sides);
 
 
@@ -85,16 +78,17 @@ int main()
             		ray_inters.push_back(*inter);
             	}
         	}
-
         	if(ray_inters.size()>0)
         	{
-    			sf::Vector2f closest = closest_point(mouse, ray_inters);
-    			shortened_line = Line(mouse, closest);
-    			draw_line(window, shortened_line);
-    			draw_point(window, closest);
+				sf::Vector2f closest = closest_point(mouse, ray_inters);
+				shortened_line = Line(mouse, closest);
+				draw_line(window, shortened_line);
+				draw_point(window, closest);
+				inters.insert(std::pair<double, sf::Vector2f>(get_angle(mouse, closest), closest));
         	}
-
         }
+        if(inters.size() > 0)
+        	draw_triangles(window,mouse,inters);
         window.display();
     }
 }
