@@ -10,20 +10,6 @@
 #include <vector>
 #include <iostream>
 
-//returns a list of all points on a rectangle rect that intersect with line
-std::vector<sf::Vector2f> intersects_line_rect(Line &line, sf::RectangleShape &rect)
-{
-	sf::Vector2f point;
-	std::vector<sf::Vector2f> points;
-	std::vector<Line*> segs = get_lines(rect);
-	for(int i = 0; i < (int)segs.size(); i++)
-	{
-		point = *get_intersection(line, *segs[i]);
-		points[i] = point;
-	}
-	return points;
-}
-
 //returns a point that
 sf::Vector2f* get_intersection(Line &l1, Line &l2)
 {
@@ -66,29 +52,40 @@ sf::Vector2f extend(sf::Vector2f &p1, sf::Vector2f &p2, double length)
 	return out;
 }
 
-std::vector<sf::Vector2f> get_points(sf::RectangleShape &rect)
+std::vector<sf::Vector2f> get_points(sf::ConvexShape &shape)
 {
 	std::vector<sf::Vector2f> points;
-	sf::Vector2f origin = rect.getPosition();
-	sf::Vector2f topRight(origin.x+rect.getSize().x, origin.y);
-	sf::Vector2f bottomRight(origin.x+rect.getSize().x, origin.y+rect.getSize().y);
-	sf::Vector2f bottomLeft(origin.x, origin.y+rect.getSize().y);
-	points = {origin, topRight, bottomRight, bottomLeft};
+	for(int i = 0; i < shape.getPointCount(); i++)
+	{
+		points.push_back(shape.getPoint(i));
+	}
 	return points;
 }
 
-std::vector<Line*> get_lines(sf::RectangleShape &rect)
+std::vector<Line*> get_lines(sf::ConvexShape &shape)
 {
 	std::vector<Line*> lines;
-	sf::Vector2f origin = rect.getPosition();
-	sf::Vector2f topRight(origin.x+rect.getSize().x, origin.y);
-	sf::Vector2f bottomRight(origin.x+rect.getSize().x, origin.y+rect.getSize().y);
-	sf::Vector2f bottomLeft(origin.x, origin.y+rect.getSize().y);
-
-	lines.push_back(new Line(origin, topRight));
-	lines.push_back(new Line(topRight, bottomRight));
-	lines.push_back(new Line(bottomRight, bottomLeft));
-	lines.push_back(new Line(bottomLeft, origin));
+	int p_count = shape.getPointCount();
+	for(int i = 1; i <= p_count; i++)
+	{
+		sf::Vector2f p1;
+		sf::Vector2f p2;
+		if(i == p_count)
+		{
+			p1 = shape.getPoint(0);
+			p2 = shape.getPoint(p_count-1);
+			Line* line = new Line(p1,p2);
+			lines.push_back(line);
+			break;
+		}
+		else
+		{
+			p1 = shape.getPoint(i);
+			p2 = shape.getPoint(i-1);
+			Line* line = new Line(p1,p2);
+			lines.push_back(line);
+		}
+	}
 
 	return lines;
 }
@@ -104,17 +101,17 @@ double get_angle(sf::Vector2f p1, sf::Vector2f p2)
 	return (a > 0) ? a : 6.2832 + a;
 }
 
-void generate_lines(sf::Vector2f &origin, std::vector<sf::RectangleShape> &rects, std::vector<Line> &lines)
+void generate_lines(sf::Vector2f &origin, std::vector<sf::ConvexShape> &shapes, std::vector<Line> &lines)
 {
-	for (auto rect : rects)
+	for (auto shape : shapes)
 	{
-		std::vector<sf::Vector2f> rect_points = get_points(rect);
-		for(int i = 0; i < 4; i++)
+		std::vector<sf::Vector2f> shape_points = get_points(shape);
+		for(int i = 0; i < shape.getPointCount(); i++)
 		{
-			sf::Vector2f rect_point = rect_points[i];
-			sf::Vector2f extended = extend(origin,rect_point, 1000.0);
-			sf::Vector2f down(extended.x*cos(-.00001)-extended.y*sin(-.00001), extended.y*cos(-.00001) + extended.x*sin(-.00001));
-			sf::Vector2f up(extended.x*cos(.00001)-extended.y*sin(.00001), extended.y*cos(.00001) + extended.x*sin(.00001));
+			sf::Vector2f shape_point = shape_points[i];
+			sf::Vector2f extended = extend(origin,shape_point, 1000.0);
+			sf::Vector2f down(extended.x*cos(-.001)-extended.y*sin(-.001), extended.y*cos(-.001) + extended.x*sin(-.001));
+			sf::Vector2f up(extended.x*cos(.001)-extended.y*sin(.001), extended.y*cos(.001) + extended.x*sin(.001));
 			Line next(origin, extended);
 			Line down_line(origin, down);//Lines that go to the corner but don't intersect it
 			Line up_line(origin, up);
@@ -126,46 +123,15 @@ void generate_lines(sf::Vector2f &origin, std::vector<sf::RectangleShape> &rects
 	}
 }
 
-void get_rect_sides(std::vector<sf::RectangleShape> &rects, std::vector<Line> &lines)
+void get_shape_edges(std::vector<sf::ConvexShape> &shapes, std::vector<Line> &lines)
 {
-	for (auto rect : rects)
+	for (auto shape : shapes)
 	{
-		std::vector<Line*> segs = get_lines(rect);
+		std::vector<Line*> segs = get_lines(shape);
 		for(auto line : segs)
 		{
 			lines.push_back(*line);
 		}
-	}
-}
-
-void shorten_lines(sf::Vector2f &origin, std::vector<Line> &lines, std::vector<Line> &rect_sides, std::vector<sf::Vector2f> &intersections, sf::RenderWindow &window)
-{
-	for(auto line : lines)
-	{
-		std::vector<sf::Vector2f> line_inters(4);
-		for(auto side : rect_sides)
-		{
-
-			sf::Vector2f* inter = get_intersection(line, side);
-			if(inter != NULL)
-			{
-				line_inters.push_back(*inter);
-
-				//std::cout <<inter->x<<", "<< inter->y<<std::endl;
-			}
-
-		}
-		for(auto p : line_inters)
-		{
-			//std::cout <<p.x<<", "<< p.y<<std::endl;
-		}
-		sf::Vector2f closest = closest_point(origin,line_inters);
-
-		//std::cout <<closest.x<<", "<< closest.y<<std::endl;
-		intersections.push_back(closest);
-		sf::CircleShape dot;
-		dot.setPosition(closest);
-		window.draw(dot);
 	}
 }
 
@@ -192,27 +158,10 @@ sf::Vector2f closest_point(sf::Vector2f &origin, std::vector<sf::Vector2f> &poin
 
 }
 
-// std::map automatically sorts elements by key
-std::map<double, sf::Vector2f> sort_points(sf::Vector2f &origin, std::vector<sf::Vector2f> &points)
-{
-	std::map<double, sf::Vector2f> out;
-	//std::cout<<points.size()<<std::endl;
-	for(int i = 0; i < (int)points.size(); i++)
-	{
-		double slope = get_slope(points[i], origin);
-		//std::cout<<slope<<std::endl;
-		out.insert(std::pair<double, sf::Vector2f>(slope, points[i]));
-	}
-	for(auto p : points)
-				{
 
-					//std::cout <<p.x<<", "<< p.y<<std::endl;
-				}
-	return out;
-}
-
-void draw_triangles(sf::RenderWindow &window, sf::Vector2f &mouse, std::map<double, sf::Vector2f> &points)
+void draw_triangles(sf::RenderWindow &window, sf::Vector2f &mouse, std::map<double, sf::Vector2f> &points, sf::Texture* light)
 {
+	bool full_light = true;
 	std::map<double, sf::Vector2f>::iterator it;
 	for(it=points.begin(); it!= points.end(); it++)
 	{
@@ -233,15 +182,27 @@ void draw_triangles(sf::RenderWindow &window, sf::Vector2f &mouse, std::map<doub
 			p1 = it->second;
 			p2 = (++it)->second;it--;
 		}
-		//std::cout<<it->first<<"\n";
-		//std::cout<<p1.x<<", "<<p1.y<<std::endl;
-		sf::ConvexShape triangle;
-		triangle.setPointCount(3);
-		triangle.setPoint(0, mouse);
-		triangle.setPoint(1, p1);
-		triangle.setPoint(2, p2);
-		triangle.setFillColor(sf::Color::White);
-		window.draw(triangle);
+		if(full_light)
+		{
+			sf::ConvexShape triangle;
+			triangle.setPointCount(3);
+			triangle.setPoint(0, mouse);
+			triangle.setPoint(1, p1);
+			triangle.setPoint(2, p2);
+			triangle.setFillColor(sf::Color(200,200,100,60));
+			//triangle.setTexture(light);
+			//triangle.setTextureRect((sf::IntRect)triangle.getLocalBounds());
+			window.draw(triangle);
+		}
+		else
+		{
+			sf::VertexArray line(sf::LineStrip, 2);
+			line[0].position = p1;
+			line[0].color = sf::Color::Green;
+			line[1].position = p2;
+			line[1].color = sf::Color::Green;
+			window.draw(line);
+		}
 		if(break_loop)
 			break;
 	}
